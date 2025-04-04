@@ -1,0 +1,27 @@
+@startuml
+title Video Analysis Components
+
+interface VideoProcessor {
+  + processFrame(frame: Mat): DetectionResult
+}
+
+class MotionDetector implements VideoProcessor {
+  + processFrame(frame: Mat): DetectionResult
+}
+
+class ObjectRecognizer implements VideoProcessor {
+  + processFrame(frame: Mat): DetectionResult
+}
+
+class DetectionResult {
+  + boolean motionDetected
+  + List<DetectedObject> objects
+}
+
+class SurveillanceService {
+  - VideoProcessor[] processors
+  + analyzeStream(stream: VideoStream): void
+}
+
+SurveillanceService --> VideoProcessor : delegates
+@enduml

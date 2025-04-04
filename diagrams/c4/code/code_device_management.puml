@@ -1,0 +1,43 @@
+@startuml
+title Device Management Core Classes
+
+class DeviceController {
+  + createDevice(deviceDto: DeviceDTO): ResponseEntity<Device>
+  + sendCommand(deviceId: UUID, command: CommandDTO): ResponseEntity<Void>
+}
+
+class DeviceService {
+  + registerDevice(device: Device): Device
+  + processCommand(deviceId: UUID, command: Command): CommandResult
+}
+
+class DeviceStateManager {
+  - Map<UUID, DeviceState> stateCache
+  + updateState(deviceId: UUID, state: DeviceState): void
+  + getState(deviceId: UUID): DeviceState
+}
+
+class DeviceValidator {
+  + validateCommand(device: Device, command: Command): ValidationResult
+}
+
+class Device {
+  + UUID id
+  + String type
+  + String location
+  + Map<String, String> config
+}
+
+class Command {
+  + UUID deviceId
+  + String action
+  + Map<String, Object> params
+}
+
+DeviceController --> DeviceService : uses
+DeviceService --> DeviceStateManager : updates
+DeviceService --> DeviceValidator : validates
+DeviceService --> DeviceRepository : saves
+DeviceService --> KafkaTemplate : publishes
+
+@enduml

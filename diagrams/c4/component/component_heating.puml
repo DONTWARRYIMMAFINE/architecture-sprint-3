@@ -1,0 +1,34 @@
+@startuml
+title Heating Service Component Diagram
+
+top to bottom direction
+
+!include <C4/C4_Component>
+
+Container_Boundary(HeatingService, "Heating Service") {
+    Component(HeatingController, "HeatingController", "Spring REST", "API управления")
+    Component(TempAnalyzer, "TempAnalyzer", "", "Анализ данных датчиков")
+    Component(BoilerManager, "BoilerManager", "", "Логика котла")
+    Component(Scheduler, "Scheduler", "Quartz", "Расписания")
+
+    Component(HeatEventPublisher, "EventPublisher", "Spring Kafka", "Публикация событий")
+    Component(HeatEventConsumer, "EventConsumer", "Spring Kafka", "Обработка команд")
+}
+
+ContainerDb(HeatingDB, "Heating Data", "TimescaleDB", "Метрики и конфигурации")
+Container(MessageBroker, "Event Bus", "Apache Kafka")
+Container(API_Gateway, "API Gateway", "Spring Cloud Gateway")
+Container_Ext(Sensor, "Temperature Sensor", "MQTT Device")
+
+Rel(API_Gateway, HeatingController, "HTTP/JSON")
+Rel(Sensor, TempAnalyzer, "MQTT", "Показания")
+Rel(HeatingController, TempAnalyzer, "Запрос данных")
+Rel(TempAnalyzer, BoilerManager, "Рекомендации")
+Rel(HeatingController, Scheduler, "Управление расписанием")
+Rel(Scheduler, BoilerManager, "Триггеры")
+Rel(BoilerManager, HeatingDB, "JDBC", "Сохранение")
+Rel(BoilerManager, HeatEventPublisher, "События")
+Rel(HeatEventPublisher, MessageBroker, "HeatingEvent")
+Rel(MessageBroker, HeatEventConsumer, "ExternalCommand")
+Rel(HeatEventConsumer, BoilerManager, "Применение команд")
+@enduml

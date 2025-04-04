@@ -1,0 +1,28 @@
+@startuml
+title Surveillance Service Component Diagram
+
+top to bottom direction
+
+!include <C4/C4_Component>
+
+Container_Boundary(SurveillanceService, "Surveillance Service") {
+    Component(SurvController, "SurvController", "Spring REST", "API управления")
+    Component(VideoAnalyzer, "VideoAnalyzer", "OpenCV", "Анализ видео")
+    Component(AlertManager, "AlertManager", "", "Генерация тревожных сообщений")
+
+    Component(SurvEventPublisher, "EventPublisher", "Spring Kafka", "Публикация событий")
+}
+
+ContainerDb(SurvDB, "Surveillance Data", "MongoDB", "Видеоаналитика")
+Container(MessageBroker, "Event Bus", "Apache Kafka")
+Container(API_Gateway, "API Gateway", "Spring Cloud Gateway")
+Container_Ext(Camera, "IP Camera", "RTSP Stream")
+
+Rel(API_Gateway, SurvController, "HTTP/JSON")
+Rel(Camera, VideoAnalyzer, "RTSP", "Видеопоток")
+Rel(SurvController, VideoAnalyzer, "Настройки")
+Rel(VideoAnalyzer, AlertManager, "Обнаружение")
+Rel(AlertManager, SurvDB, "MongoClient", "Сохранение")
+Rel(AlertManager, SurvEventPublisher, "События")
+Rel(SurvEventPublisher, MessageBroker, "SurveillanceEvent")
+@enduml

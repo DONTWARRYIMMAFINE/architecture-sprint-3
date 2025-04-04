@@ -1,0 +1,28 @@
+@startuml
+title Gate Service Component Diagram
+
+top to bottom direction
+
+!include <C4/C4_Component>
+
+Container_Boundary(GateService, "Gate Service") {
+    Component(GateController, "GateController", "Spring REST", "API управления")
+    Component(AccessManager, "AccessManager", "", "Контроль доступа")
+    Component(EventLogger, "EventLogger", "", "Логирование")
+
+    Component(GateEventPublisher, "EventPublisher", "Spring Kafka", "Публикация событий")
+}
+
+ContainerDb(GateDB, "Gate Logs", "PostgreSQL", "Журнал доступа")
+Container(MessageBroker, "Event Bus", "Apache Kafka")
+Container(API_Gateway, "API Gateway", "Spring Cloud Gateway")
+Container_Ext(GateDevice, "Smart Gate", "MQTT Device")
+
+Rel(API_Gateway, GateController, "HTTP/JSON")
+Rel(GateDevice, AccessManager, "MQTT", "Статус")
+Rel(GateController, AccessManager, "Команды")
+Rel(AccessManager, EventLogger, "Логирование")
+Rel(EventLogger, GateDB, "JDBC", "Сохранение")
+Rel(AccessManager, GateEventPublisher, "События")
+Rel(GateEventPublisher, MessageBroker, "GateEvent")
+@enduml
