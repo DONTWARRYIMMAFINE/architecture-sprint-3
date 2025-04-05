@@ -1,0 +1,28 @@
+@startuml
+title Lighting Service Component Diagram
+
+top to bottom direction
+
+!include <C4/C4_Component>
+
+Container_Boundary(LightingService, "Lighting Service") {
+    Component(LightingController, "LightingController", "Spring REST", "API управления")
+    Component(LightScheduler, "LightScheduler", "", "Расписания освещения")
+    Component(SensorProcessor, "SensorProcessor", "", "Анализ датчиков")
+
+    Component(LightEventPublisher, "EventPublisher", "Spring Kafka", "Публикация событий")
+}
+
+ContainerDb(LightingDB, "Lighting Data", "PostgreSQL", "Конфигурации")
+Container(MessageBroker, "Event Bus", "Apache Kafka")
+Container(API_Gateway, "API Gateway", "Spring Cloud Gateway")
+Container_Ext(Switch, "Light Switch", "MQTT Device")
+
+Rel(API_Gateway, LightingController, "HTTP/JSON")
+Rel(Switch, SensorProcessor, "MQTT", "Состояние")
+Rel(LightingController, LightScheduler, "Настройка")
+Rel(LightScheduler, SensorProcessor, "Автоматизация")
+Rel(SensorProcessor, LightingDB, "JPA", "Сохранение")
+Rel(SensorProcessor, LightEventPublisher, "События")
+Rel(LightEventPublisher, MessageBroker, "LightingEvent")
+@enduml

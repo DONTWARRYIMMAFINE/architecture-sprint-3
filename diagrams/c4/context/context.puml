@@ -1,0 +1,20 @@
+@startuml
+title (OLD) WarmHome Context Diagram
+
+top to bottom direction
+
+!include <C4/C4_CONTEXT>
+SHOW_PERSON_OUTLINE()
+
+Person(user, "User", "Пользователь системы WarmHome")
+Person_Ext(engineer, "Engineer", "Персонал компании")
+System(WarmHomeSystem, "WarmHome System", "Система управления отоплением и температурой")
+System_Ext(sensor, "Temperature Sensor", "Датчик температуры")
+System_Ext(device, "Heating Device", "Устройство, управляющее отоплением")
+
+Rel(user, WarmHomeSystem, "Управление отоплением/просмотр информации")
+Rel_R(engineer, WarmHomeSystem, "Настройка системы, подключение устройств/датчиков")
+Rel(WarmHomeSystem, sensor, "Считывает показания датчика")
+Rel(WarmHomeSystem, device, "Включение/отключение отопления")
+
+@enduml

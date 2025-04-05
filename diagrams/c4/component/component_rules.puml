@@ -1,0 +1,47 @@
+@startuml
+!include <C4/C4_Component>
+
+title Rules Engine Component Diagram
+
+Container_Boundary(rules, "Rules Engine") {
+    Container_Boundary(rules_api, "Rules API", "Spring REST Controller", "REST endpoints для управления правилами") {
+        Component(rules_controller, "RulesController", "Spring MVC", "POST /rules")
+        Component(validation_filter, "ValidationFilter", "", "Валидация DTO")
+    }
+
+    Container_Boundary(rules_core, "Rules Core", "Drools Engine", "Ядро обработки правил") {
+        Component(kie_session, "KieSession", "Drools", "Исполнение правил")
+        Component(agenda_filter, "AgendaFilter", "Drools", "Оптимизация проверки")
+        Component(event_processor, "EventProcessor", "", "Сопоставление с правилами")
+    }
+
+    Container_Boundary(storage, "Rules Storage", "", "Хранение и кеширование") {
+        Component(rules_repo, "RulesRepository", "Spring Data JPA", "CRUD операций")
+        Component(compiled_cache, "CompiledCache", "Hazelcast", "Кеш скомпилированных правил")
+    }
+
+    Container_Boundary(event_bus, "Event Bus Adapter", "Spring Kafka", "Интеграция с Kafka") {
+        Component(event_consumer, "EventConsumer", "", "Подписка на DeviceEvent")
+        Component(command_publisher, "CommandPublisher", "", "Публикация CommandEvent")
+    }
+
+    Rel(rules_controller, validation_filter, "Валидирует", "DTO")
+    Rel(validation_filter, rules_repo, "Сохраняет", "JPA")
+    Rel(rules_repo, compiled_cache, "Кеширует", "Hazelcast")
+    Rel(compiled_cache, kie_session, "Загружает", "DRL")
+    Rel(event_consumer, event_processor, "Передает", "DeviceEvent")
+    Rel(event_processor, kie_session, "Обрабатывает", "Fact")
+    Rel(kie_session, agenda_filter, "Фильтрует", "RuleMatch")
+    Rel(agenda_filter, command_publisher, "Генерирует", "CommandEvent")
+}
+
+ContainerDb(rules_db, "Rules Database", "PostgreSQL", "Хранение правил")
+Container(kafka, "Event Bus", "Apache Kafka")
+Container(api_gw, "API Gateway", "Spring Cloud Gateway")
+
+Rel(api_gw, rules_api, "HTTP/JSON", "API Calls")
+Rel(rules_repo, rules_db, "JDBC", "SQL-запросы")
+Rel(event_consumer, kafka, "Подписка", "device-events")
+Rel(command_publisher, kafka, "Публикация", "command-events")
+
+@enduml

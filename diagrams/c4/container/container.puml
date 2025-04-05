@@ -1,0 +1,83 @@
+@startuml
+title (NEW) WarmHome Container Diagram
+
+top to bottom direction
+
+!include <C4/C4_Container>
+SHOW_PERSON_OUTLINE()
+
+AddElementTag("client", $bgColor="#49A0AB")
+AddElementTag("gateway", $bgColor="#446DF6")
+AddElementTag("microservice", $bgColor="#00635D")
+AddElementTag("broker", $bgColor="#8C69DE")
+AddElementTag("database", $bgColor="#08A4BD")
+
+Person(user, "User", "Пользователь системы WarmHome")
+Person_Ext(engineer, "Engineer", "Персонал компании")
+
+System_Boundary(system, "Экосистема WarmHome") {
+    Container(web, "Веб-клиент", "React/TypeScript", "SPA приложение", $tags="client")
+    Container(mobile, "Мобильное приложение", "Kotlin/Swift", "Нативное мобильное приложение", $tags="client")
+    Container(dashboard, "Админ-панель", "Angular", "Внутренний дашборд", $tags="client")
+
+    Container(api_gw, "API Gateway", "Spring Cloud Gateway", "Единая точка входа", $tags="gateway")
+    Container(notifications, "Push Notifications", "Firebase", "Отправка уведомлений", $tags="microservice")
+
+    Container(device_mgmt, "Device Management", "Spring Boot", "Управление устройствами", $tags="microservice")
+    Container(rules, "Rules Engine", "Drools", "Управление правилами автоматизации", $tags="microservice")
+    Container(heating, "Heating Service", "Spring Boot", "Управление отоплением", $tags="microservice")
+    Container(lighting, "Lighting Service", "Spring Boot", "Управление освещением", $tags="microservice")
+    Container(gates, "Gate Service", "Spring Boot", "Управление воротами", $tags="microservice")
+    Container(surveillance, "Surveillance Service", "Spring Boot", "Видеонаблюдение", $tags="microservice")
+
+    ContainerDb(broker, "Event Bus", "Apache Kafka", "Шина событий", $tags="broker")
+    Container(device_gw, "IoT Gateway", "Eclipse Mosquitto", "MQTT шлюз", $tags="gateway")
+
+    ContainerDb(device_mgmt_db, "Device Registry", "PostgreSQL", "Учет устройств", $tags="database")
+    ContainerDb(rules_db, "Rules Database", "PostgreSQL", "Правила автоматизации", $tags="database")
+    ContainerDb(heating_db, "Heating Data", "TimescaleDB", "Данные отопления", $tags="database")
+    ContainerDb(lighting_db, "Lighting Data", "PostgreSQL", "Данные освещения", $tags="database")
+    ContainerDb(gates_db, "Gates Data", "PostgreSQL", "Журнал доступа", $tags="database")
+    ContainerDb(surveillance_db, "Surveillance Data", "MongoDB", "Видеоаналитика", $tags="database")
+    ContainerDb(event_store, "Event Store", "EventStoreDB", "История событий", $tags="database")
+}
+
+Container_Ext(auth, "Auth Service", "Keycloak", "Аутентификация")
+
+Rel(user, web, "Использует", "HTTPS")
+Rel(user, mobile, "Использует", "HTTPS")
+Rel(engineer, dashboard, "Использует", "HTTPS")
+
+Rel(web, api_gw, "API calls", "REST/HTTPS")
+Rel(mobile, api_gw, "API calls", "REST/HTTPS")
+Rel(dashboard, api_gw, "API calls", "REST/HTTPS")
+
+Rel(api_gw, auth, "Проверка токенов", "JWT")
+Rel(api_gw, device_mgmt, "Управление", "HTTP/JSON")
+Rel(api_gw, notifications, "Уведомления", "HTTP/JSON")
+
+Rel(device_mgmt, broker, "DeviceRegistered", "Kafka")
+Rel(rules, broker, "Подписка", "Kafka")
+Rel(heating, broker, "TemperatureEvent", "Kafka")
+Rel(lighting, broker, "LightingEvent", "Kafka")
+Rel(gates, broker, "GateEvent", "Kafka")
+Rel(surveillance, broker, "SurveillanceEvent", "Kafka")
+
+Rel(device_gw, heating, "Датчики", "MQTT")
+Rel(device_gw, lighting, "Сенсоры", "MQTT")
+Rel(device_gw, gates, "Статус", "MQTT")
+Rel(device_gw, surveillance, "Поток", "RTSP")
+
+Rel(device_mgmt, device_mgmt_db, "Хранит", "JPA")
+Rel(rules, rules_db, "Хранит", "JPA")
+Rel(heating, heating_db, "Хранит", "JDBC")
+Rel(lighting, lighting_db, "Хранит", "JDBC")
+Rel(gates, gates_db, "Хранит", "JPA")
+Rel(surveillance, surveillance_db, "Хранит", "JDBC")
+
+Rel(heating, event_store, "События", "REST/HTTPS")
+Rel(lighting, event_store, "События", "REST/HTTPS")
+Rel(gates, event_store, "События", "REST/HTTPS")
+Rel(surveillance, event_store, "События", "REST/HTTPS")
+
+@enduml

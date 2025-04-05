@@ -1,0 +1,31 @@
+@startuml
+title Device Management Service Component Diagram
+
+top to bottom direction
+
+!include <C4/C4_Component>
+
+Container_Boundary(DeviceManagementService, "Device Management Service") {
+    Component(DeviceController, "DeviceController", "Spring REST Controller", "Обработка HTTP-запросов")
+    Component(CommandProcessor, "CommandProcessor", "Spring Component", "Трансляция команд устройствам")
+    Component(StateManager, "StateManager", "", "Поддержка актуального состояния")
+    Component(DeviceValidator, "DeviceValidator", "", "Валидация конфигураций")
+
+    Component(EventPublisher, "EventPublisher", "Spring Kafka", "Публикация DeviceEvent")
+    Component(EventConsumer, "EventConsumer", "Spring Kafka", "Обработка DeviceStateEvent")
+}
+
+ContainerDb(PostgresDB, "Device Registry", "PostgreSQL", "Постоянное хранение")
+Container(MessageBroker, "Event Bus", "Apache Kafka", "Асинхронная коммуникация")
+Container(API_Gateway, "API Gateway", "Spring Cloud Gateway")
+
+Rel(API_Gateway, DeviceController, "HTTP/JSON", "REST API")
+Rel(DeviceController, CommandProcessor, "Вызов методов")
+Rel(CommandProcessor, StateManager, "Обновление состояния")
+Rel(CommandProcessor, DeviceValidator, "Валидация")
+Rel(StateManager, PostgresDB, "JDBC", "Сохранение состояния")
+Rel(CommandProcessor, EventPublisher, "Генерация событий")
+Rel(EventPublisher, MessageBroker, "DeviceEvent")
+Rel(MessageBroker, EventConsumer, "DeviceStateEvent")
+Rel(EventConsumer, StateManager, "Синхронизация")
+@enduml

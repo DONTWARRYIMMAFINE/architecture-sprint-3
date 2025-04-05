@@ -1,0 +1,24 @@
+@startuml
+title Temperature Processing Sequence
+
+actor User as U
+participant API as "API Gateway"
+participant Controller as "HeatingController"
+participant Service as "HeatingService"
+participant Analyzer as "TempAnalyzer"
+database TSDB as "TimescaleDB"
+queue Kafka as "Event Bus"
+
+U -> API : POST /heating/schedule
+API -> Controller : scheduleHeating(scheduleDTO)
+Controller -> Service : createSchedule(schedule)
+Service -> TSDB : INSERT heating_schedule
+Service -> Kafka : Publish HeatingScheduleEvent
+
+loop Каждые 5 минут
+  Service -> Analyzer : checkCurrentTemperature()
+  Analyzer -> TSDB : SELECT last_hour_metrics
+  Analyzer -> Service : calculateOptimalHeating()
+  Service -> Kafka : Publish BoilerCommandEvent
+end
+@enduml
